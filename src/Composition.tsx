@@ -1,140 +1,114 @@
-import {useVideoConfig} from 'remotion';
-import {useCurrentFrame} from 'remotion';
-import {AbsoluteFill, Audio, Img, Sequence, spring, staticFile} from 'remotion';
-import {z} from 'zod';
+import { useVideoConfig, useCurrentFrame, AbsoluteFill, Audio, Img, staticFile } from 'remotion';
+import { z } from 'zod';
+import { RadialBarsVisualization } from './RadialBarsVisualization';
+import { AudioData, useAudioData, visualizeAudio } from '@remotion/media-utils';
 
 export const myCompSchema = z.object({
-	speakers: z.record(
-		z.array(z.object({startFrame: z.number(), stopFrame: z.number()}))
-	),
+	audioFile: z.string(),
+	backgroundImage: z.string(),
 });
 
-const EXIT_ANIMATION_DURATION_IN_FRAMES = 15;
+export type MyCompProps = z.infer<typeof myCompSchema>;
 
-export const MyComposition: React.FC<z.infer<typeof myCompSchema>> = ({
-	speakers,
+export const MyComposition: React.FC<MyCompProps> = ({
+  audioFile,
+  backgroundImage,
 }) => {
-	const speakersMetadata = [
-		{
-			name: 'Adam',
-			color: '#0b0b0b',
-			picture: staticFile('adam.jpg'),
-			speakerLabel: 'A',
-		},
-		{
-			name: 'Ian',
-			color: '#342f2a',
-			picture: staticFile('ian.jpg'),
-			speakerLabel: 'B',
-		},
-		{
-			name: 'Aaron',
-			color: '#e2ad9d',
-			picture: staticFile('aaron.jpg'),
-			speakerLabel: 'C',
-		},
-	];
+  const speakersMetadata = [
+    {
+      name: 'Aaron',
+      color: '#0b0b0b',
+      picture: staticFile('andhbhakth.webp'),
+      speakerLabel: 'A',
+    },
+  ];
 
-	return (
-		<>
-			<AbsoluteFill>
-				<Img
-					src={staticFile('/background.jpg')}
-					className="h-full w-full object-cover object-center"
-				/>
-			</AbsoluteFill>
+  const combineValues = (length: number, sources: Array<number[]>): number[] => {
+    return Array.from({ length }).map((_, i) => {
+      return sources.reduce((acc, source) => {
+        return Math.max(acc, source[i]);
+      }, 0);
+    });
+  };
 
-			<AbsoluteFill>
-				<div className="bg-zinc-900 mx-12 my-10 h-full rounded-md shadow-2xl">
-					<div className="grid grid-cols-3 grid-rows-1 p-4 gap-x-2 h-full">
-						{speakersMetadata.map((speakerMetadata, index) => (
-							<div
-								key={index}
-								style={{backgroundColor: speakerMetadata.color}}
-								className="grid grid-rows-[1fr,auto] rounded-md"
-							>
-								<div className="flex justify-center items-center">
-									<div className="relative">
-										<Img
-											src={speakerMetadata.picture}
-											className="size-32 rounded-full shadow-xl"
-										/>
+  const { fps } = useVideoConfig();
+  const frame = useCurrentFrame();
 
-										{speakers[speakerMetadata.speakerLabel].map(
-											(segment, index) => (
-												<Sequence
-													key={index}
-													from={segment.startFrame}
-													durationInFrames={
-														segment.stopFrame -
-														segment.startFrame +
-														EXIT_ANIMATION_DURATION_IN_FRAMES // Be sure the exit animation won't be truncated by extending the duration of the sequence
-													}
-												>
-													<GreenRing
-														startFrame={segment.startFrame}
-														stopFrame={segment.stopFrame}
-													/>
-												</Sequence>
-											)
-										)}
-									</div>
-								</div>
+  const speechData = useAudioData(staticFile(audioFile));
 
-								<div>
-									<p className="px-2 py-0.5 text-white bg-zinc-900/20">
-										{speakerMetadata.name}
-									</p>
-								</div>
-							</div>
-						))}
-					</div>
-				</div>
-			</AbsoluteFill>
+  if (!speechData) return null;
 
-			<Audio src={staticFile('/podcast.m4a')} />
-		</>
-	);
+  const nSamples = 512;
+
+  const visualizeMultipleAudio = ({
+    sources,
+    ...options
+  }: {
+    frame: number;
+    fps: number;
+    numberOfSamples: number;
+    sources: Array<AudioData>;
+    smoothing?: boolean | undefined;
+  }) => {
+    const sourceValues = sources.map((source) => {
+      return visualizeAudio({ ...options, audioData: source });
+    });
+    return combineValues(options.numberOfSamples, sourceValues);
+  };
+
+  const visualizationValues = visualizeMultipleAudio({
+    fps,
+    frame,
+    sources: [speechData],
+    numberOfSamples: nSamples,
+  });
+
+  const frequencyData = visualizationValues.slice(0, 0.7 * nSamples);
+
+  return (
+    <>
+      <AbsoluteFill>
+        <Img
+          src={staticFile(backgroundImage)}
+          className="h-full w-full object-cover object-center"
+        />
+      </AbsoluteFill>
+
+      <AbsoluteFill>
+        <div className="bg-zinc-900 mx-12 my-10 h-full rounded-md shadow-2xl flex items-center justify-center">
+          <div className="relative" style={{ marginTop: '120%' }}>
+            {speakersMetadata.map((speakerMetadata, index) => (
+              <div
+                key={index}
+                className="flex flex-col items-center rounded-md"
+              >
+                <div className="relative flex items-center justify-center">
+                  <Img
+                    src={speakerMetadata.picture}
+                    className="size-72 rounded-full shadow-xl overflow-hidden"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <RadialBarsVisualization
+                      frequencyData={frequencyData}
+                      diameter={550}
+                      innerRadius={142}
+                      color="#F4BF43"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </AbsoluteFill>
+
+      <div className="absolute bottom-20 left-12">
+        <p className="px-2 py-0.5 text-white bg-zinc-900/20 text-5xl">
+          - Andh Bhakth (no f'em)
+        </p>
+      </div>
+
+      <Audio src={staticFile(audioFile)} />
+    </>
+  );
 };
-
-function GreenRing({
-	startFrame,
-	stopFrame,
-}: {
-	startFrame: number;
-	stopFrame: number;
-}) {
-	const frame = useCurrentFrame();
-	const {fps} = useVideoConfig();
-
-	const enter = spring({
-		frame,
-		fps,
-		durationInFrames: EXIT_ANIMATION_DURATION_IN_FRAMES,
-	});
-	const exit = spring({
-		frame,
-		fps,
-		durationInFrames: EXIT_ANIMATION_DURATION_IN_FRAMES,
-		/**
-		 * The delay will make the exit animation start after the segment ends.
-		 * This will give the look that the animation starts when the speakers
-		 * starts talking, but takes some time to fade out when the speaker stops
-		 * talking.
-		 */
-		delay: stopFrame - startFrame,
-	});
-
-	/**
-	 * See this post about making an exit animation with Remotion:
-	 * https://discord.com/channels/809501355504959528/1205135451812536431/1205135451812536431
-	 */
-	const animation = enter - exit;
-
-	return (
-		<div
-			className="w-full h-full rounded-full ring-green-400 ring-4"
-			style={{opacity: animation}}
-		/>
-	);
-}
