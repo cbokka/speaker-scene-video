@@ -18,7 +18,7 @@ export const MyComposition: React.FC<MyCompProps> = ({
     {
       name: 'Aaron',
       color: '#0b0b0b',
-      picture: staticFile('andhbhakth.webp'),
+      picture: staticFile('reader.webp'),
       speakerLabel: 'A',
     },
   ];
@@ -102,11 +102,11 @@ export const MyComposition: React.FC<MyCompProps> = ({
         </div>
       </AbsoluteFill>
 
-      <div className="absolute bottom-20 left-12">
+      {/* <div className="absolute bottom-20 left-12">
         <p className="px-2 py-0.5 text-white bg-zinc-900/20 text-5xl">
           - Andh Bhakth (no f'em)
         </p>
-      </div>
+      </div> */}
 
       <Audio src={staticFile(audioFile)} />
     </>

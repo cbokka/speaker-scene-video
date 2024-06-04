@@ -4,7 +4,7 @@ const { renderMedia, selectComposition } = require('@remotion/renderer');
 const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
-const webpackOverride = require('./src/webpack-override.js').webpackOverride;
+const webpackOverride = require('./src/webpack-override').webpackOverride;
 
 // Define the composition ID from your RemotionRoot
 const compositionId = 'MyComp';
@@ -26,12 +26,15 @@ const ensureDirExists = (dirPath) => {
 // Function to render your video composition
 const renderComposition = async (inputProps, uuid) => {
   try {
+    console.log('Starting bundle process...');
     // Bundle the project
     const bundleLocation = await bundle({
       entryPoint: path.resolve('./src/index.ts'), // Update the path if necessary
       webpackOverride,
     });
 
+    console.log('Bundle process completed.');
+    console.log('Selecting composition...');
     // Select the composition
     const composition = await selectComposition({
       serveUrl: bundleLocation,
@@ -39,21 +42,29 @@ const renderComposition = async (inputProps, uuid) => {
       inputProps,
     });
 
+    console.log('Composition selected.');
+    console.log(`Composition width: ${composition.width}, height: ${composition.height}`);
+
     // Ensure the output directory exists
-    const outputLocation = `/mnt/disks/bbnews/tts/public/${uuid}.mp4`;
+    const outputLocation = `/mnt/disks/bbnews/public/${uuid}.mp4`;
     ensureDirExists(path.dirname(outputLocation));
 
     if (fs.existsSync(outputLocation)) {
       console.log(`Video already exists: ${outputLocation}`);
       return outputLocation;
     }
+
+    console.log('Starting render process...');
+    // Render the media with progress logging
     await renderMedia({
       composition,
       serveUrl: bundleLocation,
       codec: 'h264',
       outputLocation,
       inputProps,
-      browserExecutable: '/usr/bin/chromium-browser', // Specify the path to Chromium
+      onProgress: (progress) => {
+        console.log(`Rendering progress object: ${JSON.stringify(progress)}`);
+      },
     });
 
     console.log('Render done!');
@@ -66,7 +77,7 @@ const renderComposition = async (inputProps, uuid) => {
 
 // Function to process TTS and return the output file path and update JSON with charData
 const processTTS = async (content, uuid, jsonFilePath, jsonArray, itemIndex) => {
-  const outputDirectory = '/mnt/disks/bbnews/tts/public';
+  const outputDirectory = '/mnt/disks/bbnews/public';
   ensureDirExists(outputDirectory);
 
   const outputFilePath = path.join(outputDirectory, `${uuid}.mp3`);
@@ -157,6 +168,7 @@ app.post('/tts-and-render', async (req, res) => {
         audioFile: audioFilePath,
         backgroundImage: item.backgroundImage || 'background.jpg', // Assuming a default background if not provided
       };
+      console.log(`Starting render for UUID: ${item.uuid}`);
       const videoFilePath = await renderComposition(inputProps, item.uuid);
 
       // Save the video file path back to the JSON array

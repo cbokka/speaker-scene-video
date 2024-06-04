@@ -21,25 +21,27 @@
     }
   },
   "dependencies": {
-    "@remotion/bundler": "4.0.132",
-    "@remotion/cli": "4.0.132",
-    "@remotion/zod-types": "4.0.132",
+    "@remotion/bundler": "4.0.167",
+    "@remotion/cli": "4.0.167",
+    "@remotion/zod-types": "4.0.167",
     "axios": "^1.7.2",
     "express": "^4.19.2",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "remotion": "4.0.132",
+    "remotion": "4.0.167",
+    "ts-node": "^10.9.2",
     "tsc": "^2.0.4",
+    "util": "^0.12.5",
     "zod": "^3.21.4"
   },
   "devDependencies": {
-    "@remotion/eslint-config": "4.0.132",
-    "@remotion/tailwind": "4.0.132",
+    "@remotion/eslint-config": "4.0.167",
+    "@remotion/tailwind": "4.0.167",
     "@types/react": "^18.0.26",
     "@types/web": "^0.0.86",
     "eslint": "^8.43.0",
     "prettier": "^2.8.8",
-    "typescript": "^4.9.4"
+    "typescript": "^4.9.5"
   },
   "packageManager": "npm@9.9.0"
 }

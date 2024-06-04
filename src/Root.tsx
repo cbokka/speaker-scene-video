@@ -6,7 +6,7 @@ import './style.css';
 export const RemotionRoot: React.FC = () => {
 	return (
 		<>
-			<Composition<MyCompProps, {audioFile: string; backgroundImage: string}>
+			<Composition<MyCompProps, { audioFile: string; backgroundImage: string }>
 				id="MyComp"
 				component={MyComposition}
 				fps={30}
@@ -14,24 +14,31 @@ export const RemotionRoot: React.FC = () => {
 				height={1920}
 				schema={myCompSchema}
 				defaultProps={{
-					audioFile: '3f94d056-621e-4d94-9b8b-89e5e726d6a1.mp3',
-					backgroundImage: 'background.jpg',
+					audioFile: '',
+					backgroundImage: '',
 				}}
-				calculateMetadata={async ({props}) => {
+				calculateMetadata={async ({ props }) => {
 					const fps = 30;
+					console.log(`Calculating metadata for audioFile: ${props.audioFile}`);
 
-					const audioData = await getAudioData(staticFile(props.audioFile));
-					const durationInFrames = secondsToFrames(
-						audioData.durationInSeconds,
-						fps
-					);
-					return {
-						durationInFrames,
-						props: {
-							audioFile: props.audioFile,
-							backgroundImage: props.backgroundImage,
-						},
-					};
+					try {
+						const audioData = await getAudioData(staticFile(props.audioFile));
+						const durationInFrames = secondsToFrames(
+							audioData.durationInSeconds,
+							fps
+						);
+						console.log(`Calculated durationInFrames: ${durationInFrames}`);
+						return {
+							durationInFrames,
+							props: {
+								audioFile: props.audioFile,
+								backgroundImage: props.backgroundImage,
+							},
+						};
+					} catch (error) {
+						console.error(`Error getting audio data: ${error}`);
+						throw error;
+					}
 				}}
 			/>
 		</>
