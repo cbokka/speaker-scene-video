@@ -1,3 +1,4 @@
+// TTSPreProcessorServer.js
 const express = require('express');
 const { bundle } = require('@remotion/bundler');
 const { renderMedia, selectComposition } = require('@remotion/renderer');
@@ -5,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
 const webpackOverride = require('./src/webpack-override').webpackOverride;
+const { v4: uuidv4 } = require('uuid');
 
 // Define the composition ID from your RemotionRoot
 const compositionId = 'MyComp';
@@ -184,6 +186,47 @@ app.post('/tts-and-render', async (req, res) => {
     res.status(500).json({ message: 'Error processing TTS and rendering video', error: error.message });
   }
 });
+
+
+
+// API endpoint to generate script
+app.post('/generate-script', async (req, res) => {
+  const { generateScriptData } = req.body;
+
+  try {
+    const systemPrompt = fs.readFileSync('./system_prompt.txt', 'utf8'); // Read system prompt from file
+    const scriptJson = await generateScripts(systemPrompt, generateScriptData);
+
+    if (scriptJson) {
+      res.status(200).json({ message: 'Script generated!', scriptJson });
+    } else {
+      res.status(500).json({ message: 'Failed to generate script. Invalid response from model.' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error generating script', error: error.message });
+  }
+});
+
+
+// API endpoint to confirm script and place it in the specified file path
+app.post('/confirm-script', async (req, res) => {
+  const { outputDirectory, scriptJson } = req.body;
+
+  try {
+    const uuid = uuidv4(); // Generate a UUID
+    scriptJson.uuid = uuid; // Add the UUID to the scriptJson
+
+    ensureDirExists(outputDirectory);
+
+    const outputFilePath = path.join(outputDirectory, `${uuid}.json`);
+    fs.writeFileSync(outputFilePath, JSON.stringify([scriptJson], null, 2)); // Enclose scriptJson in an array
+
+    res.status(200).json({ message: 'Script confirmed!', outputFilePath });
+  } catch (error) {
+    res.status(500).json({ message: 'Error confirming script', error: error.message });
+  }
+});
+
 
 // Start the server
 app.listen(port, () => {
