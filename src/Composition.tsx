@@ -18,7 +18,7 @@ export const MyComposition: React.FC<MyCompProps> = ({
     {
       name: 'Aaron',
       color: '#0b0b0b',
-      picture: staticFile('reader.webp'),
+      picture: staticFile('whitemanreader.webp'),
       speakerLabel: 'A',
     },
   ];

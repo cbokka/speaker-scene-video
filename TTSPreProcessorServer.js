@@ -1,13 +1,12 @@
-// TTSPreProcessorServer.js
 const express = require('express');
 const { bundle } = require('@remotion/bundler');
 const { renderMedia, selectComposition } = require('@remotion/renderer');
 const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
-const webpackOverride = require('./src/webpack-override').webpackOverride;
-const { generateScripts } = require('./generateScripts'); // Import generateScripts function
 const { v4: uuidv4 } = require('uuid');
+const { generateScripts } = require('./generateScript'); // Import generateScripts function
+const webpackOverride = require('./src/webpack-override').webpackOverride;
 
 // Define the composition ID from your RemotionRoot
 const compositionId = 'MyComp';
@@ -79,7 +78,7 @@ const renderComposition = async (inputProps, uuid) => {
 };
 
 // Function to process TTS and return the output file path and update JSON with charData
-const processTTS = async (content, uuid, jsonFilePath, jsonArray, itemIndex) => {
+const processTTS = async (content, uuid, jsonFilePath, jsonArray, itemIndex, voiceId) => {
   const outputDirectory = '/mnt/disks/bbnews/public';
   ensureDirExists(outputDirectory);
 
@@ -93,7 +92,6 @@ const processTTS = async (content, uuid, jsonFilePath, jsonArray, itemIndex) => 
   console.log("Entering TTS...");
 
   // TTS API configuration
-  const voiceId = "3gsg3cxXyFLcGIfNbM6C";
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/with-timestamps`;
   const headers = {
     "Content-Type": "application/json",
@@ -104,10 +102,10 @@ const processTTS = async (content, uuid, jsonFilePath, jsonArray, itemIndex) => 
     "text": content,
     "model_id": "eleven_multilingual_v2",
     "voice_settings": {
-      "stability": 0.3,
-      "similarity_boost": 0.7,
-      "style": 0,
-      "use_speaker_boost": true
+        "stability": 0.3,
+        "similarity_boost": 0.7,
+        "style": 0,
+        "use_speaker_boost": true
     }
   };
 
@@ -143,7 +141,7 @@ const processTTS = async (content, uuid, jsonFilePath, jsonArray, itemIndex) => 
 
 // API endpoint to process TTS, render video, and update JSON
 app.post('/tts-and-render', async (req, res) => {
-  const { filePath } = req.body;
+  const { filePath, voiceId } = req.body;
 
   console.log("Entering TTS...");
 
@@ -164,7 +162,7 @@ app.post('/tts-and-render', async (req, res) => {
       }
 
       // Process TTS to create the MP3 file and update JSON with charData
-      const audioFilePath = await processTTS(item.content, item.uuid, filePath, jsonArray, i);
+      const audioFilePath = await processTTS(item.content, item.uuid, filePath, jsonArray, i, voiceId);
 
       // Use the MP3 file to render the video
       const inputProps = {
@@ -188,8 +186,6 @@ app.post('/tts-and-render', async (req, res) => {
   }
 });
 
-
-
 // API endpoint to generate script
 app.post('/generate-script', async (req, res) => {
   const { generateScriptData } = req.body;
@@ -207,7 +203,6 @@ app.post('/generate-script', async (req, res) => {
     res.status(500).json({ message: 'Error generating script', error: error.message });
   }
 });
-
 
 // API endpoint to confirm script and place it in the specified file path
 app.post('/confirm-script', async (req, res) => {
@@ -227,7 +222,6 @@ app.post('/confirm-script', async (req, res) => {
     res.status(500).json({ message: 'Error confirming script', error: error.message });
   }
 });
-
 
 // Start the server
 app.listen(port, () => {
