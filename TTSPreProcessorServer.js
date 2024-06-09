@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
-const { generateScripts } = require('./generateScript'); // Import generateScripts function
+const { generateScripts } = require('./generateScripts'); // Import generateScripts function
 const webpackOverride = require('./src/webpack-override').webpackOverride;
 
 // Define the composition ID from your RemotionRoot

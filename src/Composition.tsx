@@ -76,7 +76,7 @@ export const MyComposition: React.FC<MyCompProps> = ({
 
       <AbsoluteFill>
         <div className="bg-zinc-900 mx-12 my-10 h-full rounded-md shadow-2xl flex items-center justify-center">
-          <div className="relative" style={{ marginTop: '120%' }}>
+          <div className="relative" style={{ marginTop: '125%' }}>
             {speakersMetadata.map((speakerMetadata, index) => (
               <div
                 key={index}
